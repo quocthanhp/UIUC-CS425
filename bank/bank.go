@@ -38,14 +38,7 @@ func (bank *Bank) Transfer(payer string, payee string, amount uint) (int, error)
 	}
 
 	bank.Accounts.Put(payer, payerBal-amount)
-
-	payeeBal, err := bank.GetBalance(payee)
-	if err != nil {
-		// payee not exist, create new payee
-		bank.Accounts.Put(payee, amount)
-	} else {
-		bank.Accounts.Put(payee, payeeBal+amount)
-	}
+	bank.Deposit(payee, amount)
 
 	return SUCCESS, nil
 }
