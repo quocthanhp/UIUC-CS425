@@ -15,6 +15,8 @@ type Process struct {
 	peers     map[string]*Node
 	groupSize int
 	ln        net.Listener
+	recvd     chan *Msg
+	send      chan *Msg
 }
 
 func (p *Process) ReadPeersInfo(self_id string, filePath string) {
@@ -73,6 +75,8 @@ func (p *Process) ReadPeersInfo(self_id string, filePath string) {
 
 func (p *Process) Init() {
 	p.peers = make(map[string]*Node)
+	p.recvd = make(chan *Msg, 200)
+	p.send = make(chan *Msg, 200)
 }
 
 func (p *Process) Start() {
