@@ -1,9 +1,9 @@
 package bank_test
 
 import (
-	"testing"
-	"cs425_mp1/bank"
+	"mp1_node/internal/bank"
 	"os"
+	"testing"
 )
 
 var myBank *bank.Bank
@@ -57,14 +57,10 @@ func TestInvalidTransfer(t *testing.T) {
 	_, err := myBank.Transfer("yxpqg", "wqkby", 70)
 
 	if err == nil {
-        t.Error("Invalid transfer did not return an error as expected")
-    }
+		t.Error("Invalid transfer did not return an error as expected")
+	}
 }
 
 func TestPrintBalance(t *testing.T) {
 	myBank.PrintBalances()
 }
-
-
-
-
