@@ -75,10 +75,18 @@ func (p *Process) ReadPeersInfo(self_id string, filePath string) {
 }
 
 func (p *Process) handleConnection(conn net.Conn) {
-	fmt.Println("received connection!")
+	reader := bufio.NewReader(conn)
+
+	buf, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Error reading:", err.Error())
+		return
+	}
+	fmt.Printf("Received: %s", buf)
 }
 
 func (p *Process) startListen() {
+	var wg sync.WaitGroup
 	ln, err := net.Listen("tcp", ":"+p.self.Port)
 	if err != nil {
 		fmt.Println("Error listening:", err)
@@ -87,14 +95,20 @@ func (p *Process) startListen() {
 	p.ln = ln
 	fmt.Printf("Listening on port %s....\n", p.self.Port)
 
-	for {
+	for i := 0; i < p.groupSize; i++ {
 		conn, err := ln.Accept()
 		if err != nil {
 			log.Printf("Error accepting connection: %s\n", err)
 			continue
 		}
-		go p.handleConnection(conn)
+
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			p.handleConnection(conn)
+		}()
 	}
+	wg.Wait()
 }
 
 func connectToSinglePeer(node *node.Node, wg *sync.WaitGroup) {
@@ -108,7 +122,7 @@ func connectToSinglePeer(node *node.Node, wg *sync.WaitGroup) {
 			continue
 		}
 		node.Conn = conn
-		fmt.Fprintf(conn, "[From %s] connection established!\n", node.Id)
+		fmt.Fprintf(conn, "%s\n", node.Id)
 		connected = true
 	}
 }
