@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"mp1_node/internal/node"
 	"net"
 	"os"
 	"strconv"
@@ -14,8 +13,8 @@ import (
 )
 
 type Process struct {
-	self      *node.Node
-	peers     []*node.Node
+	self      *Node
+	peers     map[string]*Node
 	groupSize int
 	ln        net.Listener
 }
@@ -55,11 +54,11 @@ func (p *Process) ReadPeersInfo(self_id string, filePath string) {
 				fmt.Println("Wrong formatting in config file:", line)
 				continue
 			}
-			peer := new(node.Node)
+			peer := new(Node)
 			peer.Id = parts[0]
 			peer.Hostname = parts[1]
 			peer.Port = parts[2]
-			p.peers = append(p.peers, peer)
+			p.peers[peer.Id] = peer
 			if peer.Id == self_id {
 				p.self = peer
 			}
@@ -78,11 +77,18 @@ func (p *Process) handleConnection(conn net.Conn) {
 	reader := bufio.NewReader(conn)
 
 	buf, err := reader.ReadString('\n')
+	buf = strings.TrimSpace(buf)
+	fmt.Println(buf)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
 		return
 	}
-	fmt.Printf("Received: %s", buf)
+	if _, ok := p.peers[buf]; !ok {
+		fmt.Println("Cannot identify the connected peer!")
+		os.Exit(1)
+	}
+	p.peers[buf].Conn = conn
+	fmt.Printf("[SELF] Established connection with peer <%s>\n", buf)
 }
 
 func (p *Process) startListen() {
@@ -111,7 +117,7 @@ func (p *Process) startListen() {
 	wg.Wait()
 }
 
-func connectToSinglePeer(node *node.Node, wg *sync.WaitGroup) {
+func connectToSinglePeer(node *Node, wg *sync.WaitGroup) {
 	defer wg.Done()
 	connected := false
 	for !connected {
@@ -138,6 +144,10 @@ func (p *Process) connectToPeers() {
 	}
 	wg.Wait()
 	fmt.Println("Connected to All Peers!")
+}
+
+func (p *Process) Init() {
+	p.peers = make(map[string]*Node)
 }
 
 func (p *Process) Start() {

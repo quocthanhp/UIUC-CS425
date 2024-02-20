@@ -13,6 +13,7 @@ func main() {
 	}
 
 	var proc process.Process
+	proc.Init()
 	// defer proc.Clean()
 	proc.ReadPeersInfo(os.Args[1], os.Args[2])
 	proc.Start()
