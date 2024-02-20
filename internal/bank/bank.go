@@ -3,6 +3,7 @@ package bank
 import (
 	"errors"
 	"fmt"
+
 	"github.com/emirpasic/gods/maps/treemap"
 )
 
@@ -56,7 +57,7 @@ func (bank *Bank) Deposit(acct string, amount uint) {
 
 func (bank *Bank) GetBalance(acct string) (uint, error) {
 	bal, found := bank.Accounts.Get(acct)
-	
+
 	if !found {
 		return FAILURE, errors.New("account does not exist")
 	}
@@ -80,7 +81,7 @@ func (bank *Bank) PrintBalances() {
 	for it.Next() {
 		acct := it.Key().(string)
 		bal := it.Value().(uint)
-		
+
 		if bal != 0 {
 			statement += fmt.Sprintf(" %s:%d", acct, bal)
 		}
@@ -88,5 +89,3 @@ func (bank *Bank) PrintBalances() {
 
 	fmt.Println(statement)
 }
-
-
