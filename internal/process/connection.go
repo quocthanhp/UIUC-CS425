@@ -42,7 +42,7 @@ func (p *Process) handleConnection(conn net.Conn) {
 			}
 			break
 		}
-		msg, err := parseRawMessage(buf)
+		msg, err := parseRawNetworkMessage(buf)
 		if err != nil {
 			fmt.Println("[ERROR] Invalid Message")
 			continue
@@ -77,7 +77,7 @@ func (p *Process) startListen() {
 	wg.Wait()
 }
 
-func connectToSinglePeer(node *Node, wg *sync.WaitGroup) {
+func (p *Process) connectToSinglePeer(node *Node, wg *sync.WaitGroup) {
 	defer wg.Done()
 	connected := false
 	for !connected {
@@ -88,7 +88,7 @@ func connectToSinglePeer(node *Node, wg *sync.WaitGroup) {
 			continue
 		}
 		node.Conn = conn
-		fmt.Fprintf(conn, "%s\n", node.Id)
+		fmt.Fprintf(conn, "%s\n", p.self.Id)
 		connected = true
 	}
 }
@@ -99,7 +99,7 @@ func (p *Process) connectToPeers() {
 	for _, peer := range p.peers {
 		if peer != p.self {
 			wg.Add(1)
-			go connectToSinglePeer(peer, &wg)
+			go p.connectToSinglePeer(peer, &wg)
 		}
 	}
 	wg.Wait()

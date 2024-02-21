@@ -28,6 +28,7 @@ type Tx struct {
 	To     string
 	Amount int
 	TT     TxType
+	TS     TxStatus
 }
 
 func parseTxType(str string) (TxType, error) {

@@ -28,6 +28,14 @@ type Msg struct {
 	Priority int
 }
 
+/**
+How the raw messages should be formatted
+[node_id]	[Msg Type]	[Msg Id] [Tx Type]	[Amount]	[To]
+											[Amount]	[To]	[From]
+								[Proposed Priority #]
+								[Agreed Priority #]
+*/
+
 func parseMessageType(str string) (MsgType, error) {
 	if mt, exists := stringToMsgType[str]; exists {
 		return mt, nil
@@ -35,7 +43,7 @@ func parseMessageType(str string) (MsgType, error) {
 	return -1, fmt.Errorf("invalid message type: %s", str)
 }
 
-func parseRawMessage(str string) (*Msg, error) {
+func parseRawNetworkMessage(str string) (*Msg, error) {
 	parts := strings.Split(strings.TrimSpace(str), " ")
 	if len(parts) < 4 {
 		return nil, fmt.Errorf("message format error")
@@ -78,4 +86,21 @@ func parseRawMessage(str string) (*Msg, error) {
 	}
 
 	return msg, nil
+}
+
+func (msg *Msg) ToString(nid string) string {
+	switch msg.MT {
+	case Normal:
+		if msg.Tx.TT == Deposit {
+			parts := []string{nid, strconv.Itoa(int(msg.MT)), msg.Id, strconv.Itoa(int(msg.Tx.TT)), strconv.Itoa(msg.Tx.Amount), msg.Tx.To}
+			return strings.Join(parts, " ")
+		} else if msg.Tx.TT == Transfer {
+			parts := []string{nid, strconv.Itoa(int(msg.MT)), msg.Id, strconv.Itoa(int(msg.Tx.TT)), strconv.Itoa(msg.Tx.Amount), msg.Tx.To, msg.Tx.From}
+			return strings.Join(parts, " ")
+		}
+	case PrpPriority, AgrPriority:
+		parts := []string{nid, strconv.Itoa(int(msg.MT)), msg.Id, strconv.Itoa(int(msg.Priority))}
+		return strings.Join(parts, " ")
+	}
+	return ""
 }
