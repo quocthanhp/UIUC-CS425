@@ -88,7 +88,7 @@ func parseRawNetworkMessage(str string) (*Msg, error) {
 	return msg, nil
 }
 
-func (msg *Msg) ToString(nid string) string {
+func (msg *Msg) ToNetworkMsg(nid string) string {
 	switch msg.MT {
 	case Normal:
 		if msg.Tx.TT == Deposit {
