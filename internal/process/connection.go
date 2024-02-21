@@ -3,6 +3,7 @@ package process
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -11,12 +12,10 @@ import (
 	"time"
 )
 
-func (p *Process) handleConnection(conn net.Conn) {
+func (p *Process) matchConnToPeer(conn net.Conn) {
 	reader := bufio.NewReader(conn)
-
 	buf, err := reader.ReadString('\n')
 	buf = strings.TrimSpace(buf)
-	fmt.Println(buf)
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
 		return
@@ -27,6 +26,29 @@ func (p *Process) handleConnection(conn net.Conn) {
 	}
 	p.peers[buf].Conn = conn
 	fmt.Printf("[SELF] Established connection with peer <%s>\n", buf)
+}
+
+func (p *Process) handleConnection(conn net.Conn) {
+	p.matchConnToPeer(conn)
+
+	reader := bufio.NewReader(conn)
+	for {
+		buf, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				fmt.Println("Client closed the connection")
+			} else {
+				fmt.Println("Error reading:", err.Error())
+			}
+			break
+		}
+		msg, err := parseRawNetworkMessage(buf)
+		if err != nil {
+			fmt.Println("[ERROR] Invalid Message")
+			continue
+		}
+		p.recvd <- msg
+	}
 }
 
 func (p *Process) startListen() {
@@ -55,7 +77,7 @@ func (p *Process) startListen() {
 	wg.Wait()
 }
 
-func connectToSinglePeer(node *Node, wg *sync.WaitGroup) {
+func (p *Process) connectToSinglePeer(node *Node, wg *sync.WaitGroup) {
 	defer wg.Done()
 	connected := false
 	for !connected {
@@ -66,7 +88,7 @@ func connectToSinglePeer(node *Node, wg *sync.WaitGroup) {
 			continue
 		}
 		node.Conn = conn
-		fmt.Fprintf(conn, "%s\n", node.Id)
+		fmt.Fprintf(conn, "%s\n", p.self.Id)
 		connected = true
 	}
 }
@@ -77,7 +99,7 @@ func (p *Process) connectToPeers() {
 	for _, peer := range p.peers {
 		if peer != p.self {
 			wg.Add(1)
-			go connectToSinglePeer(peer, &wg)
+			go p.connectToSinglePeer(peer, &wg)
 		}
 	}
 	wg.Wait()
