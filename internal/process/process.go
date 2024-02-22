@@ -82,7 +82,7 @@ func (p *Process) Init() {
 func (p *Process) Start() {
 	var wg sync.WaitGroup
 
-	wg.Add(2)
+	wg.Add(4)
 
 	go func() {
 		defer wg.Done()
@@ -94,6 +94,16 @@ func (p *Process) Start() {
 		p.startListen()
 	}()
 
+	go func() {
+		defer wg.Done()
+		p.ReadInput()
+	}()
+
+	go func() {
+		defer wg.Done()
+		p.MonitorChannel()
+	}()
+
 	wg.Wait()
 }
 
@@ -103,3 +113,36 @@ func (p *Process) Clean() {
 		peer.Conn.Close()
 	}
 }
+
+func (p *Process) ReadInput() {
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		msg, err := ToNetworkMsg(p.self.Id, line)
+		if (err != nil) {
+			fmt.Println(err)
+			return
+		}
+
+		p.send <- msg
+	}
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading from stdin:", err)
+	}
+}
+
+func (p *Process) MonitorChannel() {
+	for {
+		select {
+		case e := <-p.recvd:
+			// TODO: handle receiving msg, put into queue
+			fmt.Printf("Received msg \"%s\" from %s\n", getTransactionString(e.Tx) ,e.From)
+		case e := <-p.send:
+			// TODO: handle stdin msg, put into queue and multicast
+			p.multicast(e)
+		}
+	}
+}
+
+

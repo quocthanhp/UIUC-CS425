@@ -2,6 +2,7 @@ package process
 
 import (
 	"fmt"
+	"strconv"
 )
 
 type TxType int
@@ -12,8 +13,8 @@ const (
 )
 
 var stringToTxType = map[string]TxType{
-	"0": Transfer,
-	"1": Deposit,
+	"TRANSFER": Transfer,
+	"DEPOSIT": Deposit,
 }
 
 type TxStatus int
@@ -36,4 +37,12 @@ func parseTxType(str string) (TxType, error) {
 		return tt, nil
 	}
 	return -1, fmt.Errorf("invalid tx type: %s", str)
+}
+
+func getTransactionString(tx Tx) string {
+	if tx.TT == Deposit {
+		return "DEPOSIT " + tx.To + " " + strconv.Itoa(tx.Amount)
+	}
+
+	return "TRANSFER " + tx.From +  " " + tx.To + " " + strconv.Itoa(tx.Amount)
 }

@@ -2,14 +2,15 @@ package process
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
 	"strings"
 	"sync"
 	"time"
+	"io"
 )
 
 func (p *Process) matchConnToPeer(conn net.Conn) {
@@ -31,26 +32,28 @@ func (p *Process) matchConnToPeer(conn net.Conn) {
 func (p *Process) handleConnection(conn net.Conn) {
 	p.matchConnToPeer(conn)
 
-	reader := bufio.NewReader(conn)
 	for {
-		buf, err := reader.ReadString('\n')
+		buf, err := bufio.NewReader(conn).ReadBytes('\n')
 		if err != nil {
 			if err == io.EOF {
-				fmt.Println("Client closed the connection")
-			} else {
-				fmt.Println("Error reading:", err.Error())
+				fmt.Printf("Client closed the connection")
+				break
 			}
+
+			fmt.Println(err)
 			break
 		}
-		msg, err := parseRawNetworkMessage(buf)
+
+		var msg Msg
+		err = json.Unmarshal(buf, &msg)
 		if err != nil {
-			fmt.Println("[ERROR] Invalid Message")
+			fmt.Println("Error reading:", err.Error())
 			continue
 		}
-		p.recvd <- msg
+		p.recvd <- &msg
 	}
 }
-
+	
 func (p *Process) startListen() {
 	var wg sync.WaitGroup
 	ln, err := net.Listen("tcp", ":"+p.self.Port)
@@ -61,13 +64,14 @@ func (p *Process) startListen() {
 	p.ln = ln
 	fmt.Printf("Listening on port %s....\n", p.self.Port)
 
-	for i := 0; i < p.groupSize; i++ {
+	// SHOULD IT BE groupsize - 1 ????
+	for i := 0; i < p.groupSize - 1; i++ {
 		conn, err := ln.Accept()
 		if err != nil {
 			log.Printf("Error accepting connection: %s\n", err)
 			continue
 		}
-
+		fmt.Println("handle client")
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
