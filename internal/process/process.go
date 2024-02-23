@@ -17,6 +17,7 @@ type Process struct {
 	ln        net.Listener
 	recvd     chan *Msg
 	send      chan *Msg
+	received  map[string]*Msg
 }
 
 func (p *Process) ReadPeersInfo(self_id string, filePath string) {
@@ -77,6 +78,7 @@ func (p *Process) Init() {
 	p.peers = make(map[string]*Node)
 	p.recvd = make(chan *Msg, 200)
 	p.send = make(chan *Msg, 200)
+	p.received = make(map[string]*Msg)
 }
 
 func (p *Process) Start() {
@@ -147,10 +149,20 @@ func (p *Process) MonitorChannel() {
 		select {
 		case e := <-p.recvd:
 			// TODO: handle receiving msg, put into queue
-			fmt.Printf("Received msg \"%s\" from %s\n", getTransactionString(e.Tx), e.From)
+			if (!p.contains(e)) {
+				fmt.Printf("Received msg \"%s\" from %s\n", getTransactionString(e.Tx), e.From)
+				p.received[e.Id] = e
+
+				if (e.From != p.self.Id) {
+					p.multicast(e)
+				}
+			}
 		case e := <-p.send:
 			// TODO: handle stdin msg, put into queue and multicast
+			p.received[e.Id] = e
 			p.multicast(e)
 		}
 	}
 }
+
+

@@ -5,8 +5,6 @@ import (
 	"fmt"
 )
 
-// CANNOT MULTICAST TO SELF ????
-
 func (p *Process) multicast(msg *Msg) {
 	fmt.Println("start multicasting...")
 

@@ -50,7 +50,7 @@ func (p *Process) startListen() {
 			log.Printf("Error accepting connection: %s\n", err)
 			continue
 		}
-		fmt.Println("handle client")
+	
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

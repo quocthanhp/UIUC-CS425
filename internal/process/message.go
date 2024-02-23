@@ -95,3 +95,11 @@ func ToNetworkMsg(node string, rawMessage string) (*Msg, error) {
 	messageNum++;
 	return msg, nil
 }
+
+func (p *Process) contains(msg *Msg) bool {
+	if _, ok := p.received[msg.Id]; ok {
+		return true
+	}
+
+	return false
+}
