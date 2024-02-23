@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
 	"strings"
 	"sync"
 	"time"
-	"io"
 )
 
 func (p *Process) matchConnToPeer(conn net.Conn) {
@@ -29,31 +29,10 @@ func (p *Process) matchConnToPeer(conn net.Conn) {
 	fmt.Printf("[SELF] Established connection with peer <%s>\n", buf)
 }
 
-func (p *Process) handleConnection(conn net.Conn) {
+func (p *Process) createConnection(conn net.Conn) {
 	p.matchConnToPeer(conn)
-
-	for {
-		buf, err := bufio.NewReader(conn).ReadBytes('\n')
-		if err != nil {
-			if err == io.EOF {
-				fmt.Printf("Client closed the connection")
-				break
-			}
-
-			fmt.Println(err)
-			break
-		}
-
-		var msg Msg
-		err = json.Unmarshal(buf, &msg)
-		if err != nil {
-			fmt.Println("Error reading:", err.Error())
-			continue
-		}
-		p.recvd <- &msg
-	}
 }
-	
+
 func (p *Process) startListen() {
 	var wg sync.WaitGroup
 	ln, err := net.Listen("tcp", ":"+p.self.Port)
@@ -65,7 +44,7 @@ func (p *Process) startListen() {
 	fmt.Printf("Listening on port %s....\n", p.self.Port)
 
 	// SHOULD IT BE groupsize - 1 ????
-	for i := 0; i < p.groupSize - 1; i++ {
+	for i := 0; i < p.groupSize-1; i++ {
 		conn, err := ln.Accept()
 		if err != nil {
 			log.Printf("Error accepting connection: %s\n", err)
@@ -75,7 +54,7 @@ func (p *Process) startListen() {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			p.handleConnection(conn)
+			p.createConnection(conn)
 		}()
 	}
 	wg.Wait()
@@ -108,4 +87,35 @@ func (p *Process) connectToPeers() {
 	}
 	wg.Wait()
 	fmt.Println("Connected to All Peers!")
+}
+
+func (p *Process) handlePeerConnections() {
+	for _, peer := range p.peers {
+		if peer != p.self {
+			go p.handleSingleConnection(peer.Conn)
+		}
+	}
+}
+
+func (p *Process) handleSingleConnection(conn net.Conn) {
+	for {
+		buf, err := bufio.NewReader(conn).ReadBytes('\n')
+		if err != nil {
+			if err == io.EOF {
+				fmt.Printf("Client closed the connection")
+				break
+			}
+
+			fmt.Println(err)
+			break
+		}
+
+		var msg Msg
+		err = json.Unmarshal(buf, &msg)
+		if err != nil {
+			fmt.Println("Error reading:", err.Error())
+			continue
+		}
+		p.recvd <- &msg
+	}
 }

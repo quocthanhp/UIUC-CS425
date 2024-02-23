@@ -82,7 +82,7 @@ func (p *Process) Init() {
 func (p *Process) Start() {
 	var wg sync.WaitGroup
 
-	wg.Add(4)
+	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
@@ -93,6 +93,15 @@ func (p *Process) Start() {
 		defer wg.Done()
 		p.startListen()
 	}()
+
+	wg.Wait()
+	go p.handlePeerConnections()
+}
+
+func (p *Process) Run() {
+	var wg sync.WaitGroup
+
+	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
@@ -119,11 +128,12 @@ func (p *Process) ReadInput() {
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		msg, err := ToNetworkMsg(p.self.Id, line)
-		if (err != nil) {
+		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
+		fmt.Println("MSG FROM STDIN:", line)
 		p.send <- msg
 	}
 
@@ -137,12 +147,10 @@ func (p *Process) MonitorChannel() {
 		select {
 		case e := <-p.recvd:
 			// TODO: handle receiving msg, put into queue
-			fmt.Printf("Received msg \"%s\" from %s\n", getTransactionString(e.Tx) ,e.From)
+			fmt.Printf("Received msg \"%s\" from %s\n", getTransactionString(e.Tx), e.From)
 		case e := <-p.send:
 			// TODO: handle stdin msg, put into queue and multicast
 			p.multicast(e)
 		}
 	}
 }
-
-
