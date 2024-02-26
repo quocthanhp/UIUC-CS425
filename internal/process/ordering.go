@@ -5,21 +5,23 @@ import "sort"
 var maxPriority = -1
 
 // write code to ingest all the messages
+//TODO: search for all the places called function multicast
+// and add the message type parameter
 func (p *Process) Ordering() {
 	que := MsgQ{}
 	for msg := range p.recvd {
-		if true {
-			// TODO: if is a normal message
+		if msg.MT == Normal {
 			N := len(que)
 			maxPriority = que[N-1].Priority
 			// TODO: multicast proposed priority = maxPriority + 1
 			que = append(que, msg)
 			sort.Sort(que)
-		} else if true {
-			// TODO: if is a proposed priority
+			msg.Tx.TS = Undeliverable
+		} else if msg.MT == PrpPriority {
 			// TODO: need a place to keep track of whether get all the proposed priority
-		} else if true {
-			// TODO: if is a agreed priority
+			// TODO: if get all the proposed priority from all the processes in teh group
+			// choose the agreed priority adn send it out
+		} else if msg.MT == AgrPriority {
 			p.msgs[msg.Id].Priority = msg.Priority
 			p.msgs[msg.Id].Tx.TS = Deliverable
 			sort.Sort(que)

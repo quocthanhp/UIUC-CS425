@@ -6,25 +6,19 @@ import (
 	"strings"
 )
 
-type MsgType int
+type MsgType string
 
 const (
-	Normal MsgType = iota
-	PrpPriority
-	AgrPriority
+	Normal      MsgType = "NML"
+	PrpPriority MsgType = "PP"
+	AgrPriority MsgType = "AP"
 )
 
-// var stringToMsgType = map[string]MsgType{
-// 	"0": Normal,
-// 	"1": PrpPriority,
-// 	"2": AgrPriority,
-// }
-
 type Msg struct {
-	From string
-	Id   string
-	Tx   Tx
-	//	MT       MsgType
+	From     string
+	Id       string
+	Tx       Tx
+	MT       MsgType
 	Priority int
 }
 
