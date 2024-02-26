@@ -18,6 +18,4 @@ func main() {
 	proc.ReadPeersInfo(os.Args[1], os.Args[2])
 	proc.Start()
 	proc.Run()
-
-	fmt.Println("Hello, Go!")
 }

@@ -21,10 +21,10 @@ const (
 // }
 
 type Msg struct {
-	From     string
-	Id       string
-	Tx       Tx
-//	MT       MsgType
+	From string
+	Id   string
+	Tx   Tx
+	//	MT       MsgType
 	Priority int
 }
 
@@ -47,7 +47,7 @@ func ToNetworkMsg(node string, rawMessage string) (*Msg, error) {
 
 	switch parts[0] {
 	case "DEPOSIT":
-		if (len(parts) != 3) {
+		if len(parts) != 3 {
 			return nil, fmt.Errorf("not enough fields in the message")
 		}
 
@@ -61,15 +61,15 @@ func ToNetworkMsg(node string, rawMessage string) (*Msg, error) {
 		amnt, err := strconv.Atoi(amount)
 		if err != nil {
 			return nil, err
-		}		
+		}
 
 		msg = &Msg{
 			From: node,
 			Id:   node + "-" + strconv.Itoa(messageNum),
-			Tx: Tx{To: to, Amount: amnt, TT: tt},
+			Tx:   Tx{To: to, Amount: amnt, TT: tt},
 		}
 	case "TRANSFER":
-		if (len(parts) != 5) {
+		if len(parts) != 5 {
 			return nil, fmt.Errorf("not enough fields in the message")
 		}
 
@@ -84,22 +84,19 @@ func ToNetworkMsg(node string, rawMessage string) (*Msg, error) {
 		if err != nil {
 			return nil, err
 		}
-		
+
 		msg = &Msg{
 			From: node,
 			Id:   node + "-" + strconv.Itoa(messageNum),
-			Tx: Tx{From: from, To: to, Amount: amnt, TT: tt},
+			Tx:   Tx{From: from, To: to, Amount: amnt, TT: tt},
 		}
 	}
 
-	messageNum++;
+	messageNum++
 	return msg, nil
 }
 
 func (p *Process) contains(msg *Msg) bool {
-	if _, ok := p.received[msg.Id]; ok {
-		return true
-	}
-
-	return false
+	_, ok := p.msgs[msg.Id]
+	return ok
 }

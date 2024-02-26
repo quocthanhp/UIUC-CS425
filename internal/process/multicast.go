@@ -19,7 +19,7 @@ func (p *Process) multicast(msg *Msg) {
 			fmt.Println("ERROR:")
 			fmt.Println(err.Error())
 		} else {
-			fmt.Println("ERROR FREE!")
+			fmt.Println("Delivered!")
 		}
 	}
 }
