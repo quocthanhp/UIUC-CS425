@@ -17,6 +17,7 @@ type Process struct {
 	ln        net.Listener
 	recvd     chan *Msg
 	send      chan *Msg
+	msgs      map[string]*Msg
 }
 
 func (p *Process) ReadPeersInfo(self_id string, filePath string) {
@@ -77,6 +78,7 @@ func (p *Process) Init() {
 	p.peers = make(map[string]*Node)
 	p.recvd = make(chan *Msg, 200)
 	p.send = make(chan *Msg, 200)
+	p.msgs = make(map[string]*Msg)
 }
 
 func (p *Process) Start() {
@@ -123,31 +125,19 @@ func (p *Process) Clean() {
 	}
 }
 
-func (p *Process) ReadInput() {
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		msg, err := ToNetworkMsg(p.self.Id, line)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		fmt.Println("MSG FROM STDIN:", line)
-		p.send <- msg
-	}
-
-	if err := scanner.Err(); err != nil {
-		fmt.Println("Error reading from stdin:", err)
-	}
-}
-
 func (p *Process) MonitorChannel() {
 	for {
 		select {
 		case e := <-p.recvd:
 			// TODO: handle receiving msg, put into queue
-			fmt.Printf("Received msg \"%s\" from %s\n", getTransactionString(e.Tx), e.From)
+			if !p.contains(e) {
+				fmt.Printf("Received msg \"%s\" from %s\n", getTransactionString(e.Tx), e.From)
+				p.msgs[e.Id] = e
+
+				if e.From != p.self.Id {
+					p.multicast(e)
+				}
+			}
 		case e := <-p.send:
 			// TODO: handle stdin msg, put into queue and multicast
 			p.multicast(e)

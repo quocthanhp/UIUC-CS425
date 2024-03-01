@@ -2,9 +2,7 @@ package process
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"os"
@@ -50,7 +48,7 @@ func (p *Process) startListen() {
 			log.Printf("Error accepting connection: %s\n", err)
 			continue
 		}
-		fmt.Println("handle client")
+
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -87,35 +85,4 @@ func (p *Process) connectToPeers() {
 	}
 	wg.Wait()
 	fmt.Println("Connected to All Peers!")
-}
-
-func (p *Process) handlePeerConnections() {
-	for _, peer := range p.peers {
-		if peer != p.self {
-			go p.handleSingleConnection(peer.Conn)
-		}
-	}
-}
-
-func (p *Process) handleSingleConnection(conn net.Conn) {
-	for {
-		buf, err := bufio.NewReader(conn).ReadBytes('\n')
-		if err != nil {
-			if err == io.EOF {
-				fmt.Printf("Client closed the connection")
-				break
-			}
-
-			fmt.Println(err)
-			break
-		}
-
-		var msg Msg
-		err = json.Unmarshal(buf, &msg)
-		if err != nil {
-			fmt.Println("Error reading:", err.Error())
-			continue
-		}
-		p.recvd <- &msg
-	}
 }
