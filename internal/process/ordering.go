@@ -1,6 +1,10 @@
 package process
 
-import "sort"
+import (
+	"fmt"
+	"mp1_node/internal/util"
+	"sort"
+)
 
 var maxPriority = -1
 
@@ -12,25 +16,33 @@ func (p *Process) Ordering() {
 	for msg := range p.recvd {
 		if msg.MT == Normal {
 			N := len(que)
-			maxPriority = que[N-1].Priority
-			// TODO: multicast proposed priority = maxPriority + 1
-			que = append(que, msg)
+			maxPriority = que[N-1].msg.Priority
+			p.unicast(&Msg{From: p.self.Id, Id: msg.Id, MT: PrpPriority, Priority: maxPriority + 1}, p.peers[msg.From])
+			que = append(que, PdMsg{msg, 0})
 			sort.Sort(que)
 			msg.Tx.TS = Undeliverable
 		} else if msg.MT == PrpPriority {
-			// TODO: need a place to keep track of whether get all the proposed priority
-			// TODO: if get all the proposed priority from all the processes in teh group
-			// choose the agreed priority adn send it out
+			if !p.contains(msg.Id) {
+				fmt.Printf("Proposed priority for an unexisted message\n")
+				continue
+			}
+			p.msgs[msg.Id].msg.Priority = util.Max(p.msgs[msg.Id].msg.Priority, msg.Priority)
+			p.msgs[msg.Id].proposed++
+			if p.msgs[msg.Id].proposed == p.groupSize {
+				// TODO: multicast agreed priority
+				p.multicast(&Msg{From: p.self.Id, Id: msg.Id, MT: AgrPriority, Priority: p.msgs[msg.Id].msg.Priority})
+			}
 		} else if msg.MT == AgrPriority {
-			p.msgs[msg.Id].Priority = msg.Priority
-			p.msgs[msg.Id].Tx.TS = Deliverable
+			p.msgs[msg.Id].msg.Priority = msg.Priority
+			p.msgs[msg.Id].msg.Tx.TS = Deliverable
 			sort.Sort(que)
+			for que[0].msg.Tx.TS == Deliverable {
+				toDeliver := que[0]
+				que = que[1:]
+				p.deliver(toDeliver.msg)
+			}
 		} else {
-			//TODO: handle invalid messages
+			fmt.Println("Invalid Message Type")
 		}
-		if que[0].Tx.TS == Deliverable {
-			//TODO: deliver the message
-		}
-
 	}
 }

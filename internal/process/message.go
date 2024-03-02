@@ -90,7 +90,7 @@ func ToNetworkMsg(node string, rawMessage string) (*Msg, error) {
 	return msg, nil
 }
 
-func (p *Process) contains(msg *Msg) bool {
-	_, ok := p.msgs[msg.Id]
+func (p *Process) contains(Id string) bool {
+	_, ok := p.msgs[Id]
 	return ok
 }

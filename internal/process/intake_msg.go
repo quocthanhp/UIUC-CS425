@@ -22,7 +22,6 @@ func (p *Process) ReadInput() {
 
 		fmt.Println("MSG FROM STDIN:", line)
 		p.send <- msg
-		p.recvd <- msg
 	}
 
 	if err := scanner.Err(); err != nil {
