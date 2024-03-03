@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Process struct {
@@ -16,9 +17,13 @@ type Process struct {
 	groupSize int
 	ln        net.Listener
 	recvd     chan *Msg
+	verified  chan *Msg
 	send      chan *Msg
-	msgs      map[string]*Msg
+	msgs      map[string]*PdMsg
+	bank      *Bank
 }
+
+// var receivedMsg = make(map[string]struct{})
 
 func (p *Process) ReadPeersInfo(self_id string, filePath string) {
 	file, err := os.Open(filePath)
@@ -77,8 +82,10 @@ func (p *Process) ReadPeersInfo(self_id string, filePath string) {
 func (p *Process) Init() {
 	p.peers = make(map[string]*Node)
 	p.recvd = make(chan *Msg, 200)
+	p.verified = make(chan *Msg, 200)
 	p.send = make(chan *Msg, 200)
-	p.msgs = make(map[string]*Msg)
+	p.msgs = make(map[string]*PdMsg)
+	p.bank = NewBank()
 }
 
 func (p *Process) Start() {
@@ -98,12 +105,31 @@ func (p *Process) Start() {
 
 	wg.Wait()
 	go p.handlePeerConnections()
+	time.Sleep(2 * time.Second)
+	fmt.Println(Cyan, "READY!", Reset)
+}
+
+func clearStdin() {
+	// Create a new reader for stdin
+	reader := bufio.NewReader(os.Stdin)
+	// Read and discard bytes until a newline (or EOF) is encountered
+	for {
+		_, err := reader.ReadString('\n')
+		if err != nil {
+			break // EOF or an actual error occurred
+		}
+		if reader.Buffered() == 0 {
+			break // No more data to read
+		}
+	}
 }
 
 func (p *Process) Run() {
 	var wg sync.WaitGroup
 
 	wg.Add(2)
+	//TODO: handle timeout proposal
+	clearStdin()
 
 	go func() {
 		defer wg.Done()
@@ -113,6 +139,11 @@ func (p *Process) Run() {
 	go func() {
 		defer wg.Done()
 		p.MonitorChannel()
+	}()
+
+	go func() {
+		defer wg.Done()
+		p.Ordering()
 	}()
 
 	wg.Wait()
@@ -128,19 +159,37 @@ func (p *Process) Clean() {
 func (p *Process) MonitorChannel() {
 	for {
 		select {
-		case e := <-p.recvd:
-			// TODO: handle receiving msg, put into queue
-			if !p.contains(e) {
-				fmt.Printf("Received msg \"%s\" from %s\n", getTransactionString(e.Tx), e.From)
-				p.msgs[e.Id] = e
-
-				if e.From != p.self.Id {
-					p.multicast(e)
-				}
+		case msg := <-p.recvd:
+			fmt.Printf(Yellow+"[GOT MSG] %s\n"+Reset, msg.toString())
+			if msg.MT == Normal {
+				p.msgs[msg.Id] = &PdMsg{msg, 0}
 			}
-		case e := <-p.send:
-			// TODO: handle stdin msg, put into queue and multicast
-			p.multicast(e)
+			p.verified <- msg
+
+			// key := string(rawbytes)
+			// fmt.Printf(Yellow+"[GOT MSG] %s\n"+Reset, string(rawbytes))
+			// if msg.MT == PrpPriority {
+			// 	fmt.Println("First branch")
+			// 	p.verified <- msg
+			// } else if _, ok := receivedMsg[key]; !ok {
+			// 	fmt.Println("Second branch")
+			// 	receivedMsg[key] = struct{}{}
+			// 	fmt.Println("Second branch")
+			// 	if msg.MT == Normal {
+			// 		fmt.Println("Second branch")
+			// 		p.msgs[msg.Id] = &PdMsg{msg, 0}
+			// 	}
+			// 	fmt.Println("Second branch")
+			// 	// fmt.Printf(Green+"[FROM %s] %s\n"+Reset, msg.From, string(rawbytes))
+			// 	p.verified <- msg
+			// 	if msg.From != p.self.Id {
+			// 		fmt.Println("Second branch")
+			// 		go p.multicast(msg)
+			// 	}
+			// }
+		case msg := <-p.send:
+			msg.From = p.self.Id
+			go p.multicast(msg)
 		}
 	}
 }

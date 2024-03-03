@@ -1,9 +1,13 @@
 package process
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 type MsgType string
@@ -38,6 +42,7 @@ func ToNetworkMsg(node string, rawMessage string) (*Msg, error) {
 	}
 
 	var msg *Msg
+	var tx Tx
 
 	switch parts[0] {
 	case "DEPOSIT":
@@ -57,11 +62,7 @@ func ToNetworkMsg(node string, rawMessage string) (*Msg, error) {
 			return nil, err
 		}
 
-		msg = &Msg{
-			From: node,
-			Id:   node + "-" + strconv.Itoa(messageNum),
-			Tx:   Tx{To: to, Amount: amnt, TT: tt},
-		}
+		tx = Tx{To: to, Amount: amnt, TT: tt}
 	case "TRANSFER":
 		if len(parts) != 5 {
 			return nil, fmt.Errorf("not enough fields in the message")
@@ -79,18 +80,27 @@ func ToNetworkMsg(node string, rawMessage string) (*Msg, error) {
 			return nil, err
 		}
 
-		msg = &Msg{
-			From: node,
-			Id:   node + "-" + strconv.Itoa(messageNum),
-			Tx:   Tx{From: from, To: to, Amount: amnt, TT: tt},
-		}
+		tx = Tx{From: from, To: to, Amount: amnt, TT: tt}
+	}
+	msg = &Msg{
+		Id: uuid.New().String(),
+		MT: Normal,
+		Tx: tx,
 	}
 
 	messageNum++
 	return msg, nil
 }
 
-func (p *Process) contains(msg *Msg) bool {
-	_, ok := p.msgs[msg.Id]
+func (p *Process) contains(Id string) bool {
+	_, ok := p.msgs[Id]
 	return ok
+}
+
+func (msg *Msg) toString() string {
+	bytes, err := json.Marshal(msg)
+	if err != nil {
+		log.Fatalf("JSON marshalling failed: %v\n", err)
+	}
+	return string(bytes)
 }
