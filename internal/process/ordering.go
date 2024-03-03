@@ -1,9 +1,7 @@
 package process
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
 	"mp1_node/internal/util"
 	"sort"
 )
@@ -13,11 +11,7 @@ var maxPriority = 0
 func (p *Process) Ordering() {
 	que := MsgQ{}
 	for msg := range p.verified {
-		rawbytes, err := json.Marshal(msg)
-		if err != nil {
-			log.Fatalf("JSON marshalling failed: %v\n", err)
-		}
-		fmt.Printf(Green+"[PROCESSING %s] %s\n"+Reset, msg.From, string(rawbytes))
+		fmt.Printf(Green+"[PROCESSING %s] %s\n"+Reset, msg.From, msg.toString())
 		if msg.MT == Normal {
 			fmt.Println(Blue, "NORMAL MESSAGE", Reset)
 			N := len(que)

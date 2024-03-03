@@ -42,7 +42,7 @@ func (p *Process) handleSingleConnection(conn net.Conn) {
 		buf, err := bufio.NewReader(conn).ReadBytes('\n')
 		if err != nil {
 			if err == io.EOF {
-				fmt.Printf("Client closed the connection")
+				fmt.Println("Client closed the connection")
 				break
 			}
 

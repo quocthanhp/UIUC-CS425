@@ -2,14 +2,13 @@ package process
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Process struct {
@@ -106,8 +105,8 @@ func (p *Process) Start() {
 
 	wg.Wait()
 	go p.handlePeerConnections()
-	// time.Sleep(2 * time.Second)
-	fmt.Println("READY!")
+	time.Sleep(2 * time.Second)
+	fmt.Println(Cyan, "READY!", Reset)
 }
 
 func clearStdin() {
@@ -129,6 +128,7 @@ func (p *Process) Run() {
 	var wg sync.WaitGroup
 
 	wg.Add(2)
+	//TODO: handle timeout proposal
 	clearStdin()
 
 	go func() {
@@ -160,12 +160,7 @@ func (p *Process) MonitorChannel() {
 	for {
 		select {
 		case msg := <-p.recvd:
-			rawbytes, err := json.Marshal(msg)
-			// bytes, err := json.Marshal(msg.Tx)
-			if err != nil {
-				log.Fatalf("JSON marshalling failed: %v\n", err)
-			}
-			fmt.Printf(Yellow+"[GOT MSG] %s\n"+Reset, string(rawbytes))
+			fmt.Printf(Yellow+"[GOT MSG] %s\n"+Reset, msg.toString())
 			if msg.MT == Normal {
 				p.msgs[msg.Id] = &PdMsg{msg, 0}
 			}

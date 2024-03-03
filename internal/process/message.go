@@ -1,7 +1,9 @@
 package process
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -93,4 +95,12 @@ func ToNetworkMsg(node string, rawMessage string) (*Msg, error) {
 func (p *Process) contains(Id string) bool {
 	_, ok := p.msgs[Id]
 	return ok
+}
+
+func (msg *Msg) toString() string {
+	bytes, err := json.Marshal(msg)
+	if err != nil {
+		log.Fatalf("JSON marshalling failed: %v\n", err)
+	}
+	return string(bytes)
 }

@@ -1,8 +1,12 @@
 package process
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 func (p *Process) deliver(msg *Msg) {
+	fmt.Fprintln(os.Stderr, msg.toString())
 	if msg.Tx.TT == Deposit {
 		p.bank.Deposit(msg.Tx.To, msg.Tx.Amount)
 	} else if msg.Tx.TT == Transfer {
