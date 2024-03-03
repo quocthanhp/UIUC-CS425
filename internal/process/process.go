@@ -2,7 +2,9 @@ package process
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"strconv"
@@ -16,10 +18,13 @@ type Process struct {
 	groupSize int
 	ln        net.Listener
 	recvd     chan *Msg
+	verified  chan *Msg
 	send      chan *Msg
 	msgs      map[string]*PdMsg
 	bank      *Bank
 }
+
+// var receivedMsg = make(map[string]struct{})
 
 func (p *Process) ReadPeersInfo(self_id string, filePath string) {
 	file, err := os.Open(filePath)
@@ -78,9 +83,10 @@ func (p *Process) ReadPeersInfo(self_id string, filePath string) {
 func (p *Process) Init() {
 	p.peers = make(map[string]*Node)
 	p.recvd = make(chan *Msg, 200)
+	p.verified = make(chan *Msg, 200)
 	p.send = make(chan *Msg, 200)
 	p.msgs = make(map[string]*PdMsg)
-	p.bank = &Bank{}
+	p.bank = NewBank()
 }
 
 func (p *Process) Start() {
@@ -100,12 +106,30 @@ func (p *Process) Start() {
 
 	wg.Wait()
 	go p.handlePeerConnections()
+	// time.Sleep(2 * time.Second)
+	fmt.Println("READY!")
+}
+
+func clearStdin() {
+	// Create a new reader for stdin
+	reader := bufio.NewReader(os.Stdin)
+	// Read and discard bytes until a newline (or EOF) is encountered
+	for {
+		_, err := reader.ReadString('\n')
+		if err != nil {
+			break // EOF or an actual error occurred
+		}
+		if reader.Buffered() == 0 {
+			break // No more data to read
+		}
+	}
 }
 
 func (p *Process) Run() {
 	var wg sync.WaitGroup
 
 	wg.Add(2)
+	clearStdin()
 
 	go func() {
 		defer wg.Done()
@@ -115,6 +139,11 @@ func (p *Process) Run() {
 	go func() {
 		defer wg.Done()
 		p.MonitorChannel()
+	}()
+
+	go func() {
+		defer wg.Done()
+		p.Ordering()
 	}()
 
 	wg.Wait()
@@ -131,18 +160,41 @@ func (p *Process) MonitorChannel() {
 	for {
 		select {
 		case msg := <-p.recvd:
-			// TODO: handle receiving msg, put into queue
-			if !p.contains(msg.Id) {
-				fmt.Printf("Received msg \"%s\" from %s\n", getTransactionString(msg.Tx), msg.From)
-				p.msgs[msg.Id] = &PdMsg{msg, 0}
-
-				if msg.From != p.self.Id {
-					p.multicast(msg)
-				}
+			rawbytes, err := json.Marshal(msg)
+			// bytes, err := json.Marshal(msg.Tx)
+			if err != nil {
+				log.Fatalf("JSON marshalling failed: %v\n", err)
 			}
-		case e := <-p.send:
-			// TODO: handle stdin msg, put into queue and multicast
-			p.multicast(e)
+			fmt.Printf(Yellow+"[GOT MSG] %s\n"+Reset, string(rawbytes))
+			if msg.MT == Normal {
+				p.msgs[msg.Id] = &PdMsg{msg, 0}
+			}
+			p.verified <- msg
+
+			// key := string(rawbytes)
+			// fmt.Printf(Yellow+"[GOT MSG] %s\n"+Reset, string(rawbytes))
+			// if msg.MT == PrpPriority {
+			// 	fmt.Println("First branch")
+			// 	p.verified <- msg
+			// } else if _, ok := receivedMsg[key]; !ok {
+			// 	fmt.Println("Second branch")
+			// 	receivedMsg[key] = struct{}{}
+			// 	fmt.Println("Second branch")
+			// 	if msg.MT == Normal {
+			// 		fmt.Println("Second branch")
+			// 		p.msgs[msg.Id] = &PdMsg{msg, 0}
+			// 	}
+			// 	fmt.Println("Second branch")
+			// 	// fmt.Printf(Green+"[FROM %s] %s\n"+Reset, msg.From, string(rawbytes))
+			// 	p.verified <- msg
+			// 	if msg.From != p.self.Id {
+			// 		fmt.Println("Second branch")
+			// 		go p.multicast(msg)
+			// 	}
+			// }
+		case msg := <-p.send:
+			msg.From = p.self.Id
+			go p.multicast(msg)
 		}
 	}
 }
