@@ -2,15 +2,15 @@ package process
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
+	"mp1_node/internal/util"
 	"net"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"mp1_node/internal/util"
-	"encoding/json"
 )
 
 type Process struct {
@@ -23,7 +23,12 @@ type Process struct {
 	send      chan *Msg
 	msgs      map[string]*PdMsg
 	bank      *Bank
-	hashMsg   map[[32]byte]bool
+	hMsg      HashMsg
+}
+
+type HashMsg struct {
+	hashMsg map[[32]byte]bool
+	hLock   sync.Mutex
 }
 
 // var receivedMsg = make(map[string]struct{})
@@ -88,7 +93,7 @@ func (p *Process) Init() {
 	p.verified = make(chan *Msg, 200)
 	p.send = make(chan *Msg, 200)
 	p.msgs = make(map[string]*PdMsg)
-	p.hashMsg = make(map[[32]byte]bool, 200)
+	p.hMsg.hashMsg = make(map[[32]byte]bool, 200)
 	p.bank = NewBank()
 }
 
@@ -169,11 +174,11 @@ func (p *Process) MonitorChannel() {
 			// Calculate hash to detect duplication
 			data, _ := json.Marshal(*msg)
 			hashVal := util.GetHash(data)
-			if _, ok := p.hashMsg[hashVal]; ok {
+			if _, ok := p.hMsg.hashMsg[hashVal]; ok {
 				fmt.Println("duplicated message!")
 				continue
 			}
-			p.hashMsg[hashVal] = true
+			p.AppendHash(hashVal)
 			fmt.Printf("[HASH] of %s is %s\n", msg.Id, hashVal)
 
 			if msg.MT == Normal {
@@ -213,4 +218,11 @@ func (p *Process) MonitorChannel() {
 			go p.multicast(msg)
 		}
 	}
+}
+
+func (p *Process) AppendHash(hash [32]byte) {
+	p.hMsg.hLock.Lock()
+	defer p.hMsg.hLock.Unlock()
+	
+	p.hMsg.hashMsg[hash] = true
 }

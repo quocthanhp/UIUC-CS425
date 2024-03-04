@@ -38,20 +38,20 @@ func (p *Process) Ordering() {
 				p.multicast(&Msg{From: p.self.Id, Id: msg.Id, MT: AgrPriority, Priority: p.msgs[msg.Id].msg.Priority})
 			}
 		} else if msg.MT == AgrPriority {
-			fmt.Println(Blue, "AGREED PRIORITY", Reset)
-			p.msgs[msg.Id].msg.Priority = msg.Priority
-			p.msgs[msg.Id].msg.Tx.TS = Deliverable
-			sort.Sort(que)
-
 			// For duplicate detection
 			data, _ := json.Marshal(*msg)
 			hashVal := util.GetHash(data)
-			p.hashMsg[hashVal] = true
+			p.AppendHash(hashVal)
 
 			if (msg.From != p.self.Id) {
 				fmt.Println("Reliably multicast AGR_PRIORITY")
 				p.multicast(msg)
 			}
+
+			fmt.Println(Blue, "AGREED PRIORITY", Reset)
+			p.msgs[msg.Id].msg.Priority = msg.Priority
+			p.msgs[msg.Id].msg.Tx.TS = Deliverable
+			sort.Sort(que)
 
 			// que.Print()
 			for que.Len() > 0 && que[0].msg.Tx.TS == Deliverable {

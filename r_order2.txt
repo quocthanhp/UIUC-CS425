@@ -1,0 +1,2 @@
+{"From":"node2","Id":"a6c8cae2-9392-4a69-9d2f-db49c3fd2463","Tx":{"From":"h","To":"n","Amount":13,"TT":0,"TS":1},"MT":"NML","Priority":1}
+signal: interrupt
