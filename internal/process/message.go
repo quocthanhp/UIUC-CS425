@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -62,7 +63,7 @@ func ToNetworkMsg(node string, rawMessage string) (*Msg, error) {
 			return nil, err
 		}
 
-		tx = Tx{To: to, Amount: amnt, TT: tt}
+		tx = Tx{To: to, Amount: amnt, TT: tt, Timestamp: time.Now().Format(time.RFC3339)}
 	case "TRANSFER":
 		if len(parts) != 5 {
 			return nil, fmt.Errorf("not enough fields in the message")
@@ -80,7 +81,7 @@ func ToNetworkMsg(node string, rawMessage string) (*Msg, error) {
 			return nil, err
 		}
 
-		tx = Tx{From: from, To: to, Amount: amnt, TT: tt}
+		tx = Tx{From: from, To: to, Amount: amnt, TT: tt, Timestamp: time.Now().Format(time.RFC3339)}
 	}
 	msg = &Msg{
 		Id: uuid.New().String(),
@@ -98,9 +99,17 @@ func (p *Process) contains(Id string) bool {
 }
 
 func (msg *Msg) toString() string {
+	var priority int
+	if msg.MT == Normal {
+		priority = msg.Priority
+		msg.Priority = 0
+	}
 	bytes, err := json.Marshal(msg)
 	if err != nil {
 		log.Fatalf("JSON marshalling failed: %v\n", err)
+	}
+	if msg.MT == Normal {
+		msg.Priority = priority
 	}
 	return string(bytes)
 }

@@ -8,6 +8,12 @@ import (
 
 var maxPriority = 0
 
+func (p *Process) DemoOrdering() {
+	for msg := range p.verified {
+		fmt.Printf(Green+"[PROCESSING %s] %s\n"+Reset, msg.From, msg.toString())
+	}
+}
+
 func (p *Process) Ordering() {
 	for msg := range p.verified {
 		if _, ok := p.peers[msg.From]; !ok {

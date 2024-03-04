@@ -14,7 +14,7 @@ const (
 
 var stringToTxType = map[string]TxType{
 	"TRANSFER": Transfer,
-	"DEPOSIT": Deposit,
+	"DEPOSIT":  Deposit,
 }
 
 type TxStatus int
@@ -25,11 +25,12 @@ const (
 )
 
 type Tx struct {
-	From   string
-	To     string
-	Amount int
-	TT     TxType
-	TS     TxStatus
+	From      string
+	To        string
+	Amount    int
+	TT        TxType
+	TS        TxStatus
+	Timestamp string
 }
 
 func parseTxType(str string) (TxType, error) {
@@ -44,5 +45,5 @@ func getTransactionString(tx Tx) string {
 		return "DEPOSIT " + tx.To + " " + strconv.Itoa(tx.Amount)
 	}
 
-	return "TRANSFER " + tx.From +  " " + tx.To + " " + strconv.Itoa(tx.Amount)
+	return "TRANSFER " + tx.From + " " + tx.To + " " + strconv.Itoa(tx.Amount)
 }
