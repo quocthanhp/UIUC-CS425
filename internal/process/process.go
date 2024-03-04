@@ -195,3 +195,9 @@ func (p *Process) MonitorChannel() {
 		}
 	}
 }
+
+func (p *Process) handleFailure(peer *Node) {
+	p.que.removeDeprecatedMsg(peer)
+	p.groupSize--
+	delete(p.peers, peer.Id)
+}

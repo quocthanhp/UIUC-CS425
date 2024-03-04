@@ -10,6 +10,10 @@ var maxPriority = 0
 
 func (p *Process) Ordering() {
 	for msg := range p.verified {
+		if _, ok := p.peers[msg.From]; !ok {
+			fmt.Println(Cyan, "Mesage from invalid source.", Reset)
+			continue
+		}
 		fmt.Printf(Green+"[PROCESSING %s] %s\n"+Reset, msg.From, msg.toString())
 		if msg.MT == Normal {
 			fmt.Println(Blue, "NORMAL MESSAGE", Reset)

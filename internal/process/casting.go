@@ -18,14 +18,17 @@ func (p *Process) unicast(msg *Msg, peer *Node) {
 	fmt.Printf(Purple+"Unicasting to %s...."+Reset+"\n", peer.Id)
 	if peer.Id == p.self.Id {
 		p.recvd <- msg
+		fmt.Printf(Purple + "Unicasted to SELF" + Reset + "\n")
 		return
 	}
 
 	jsonData, _ := json.Marshal(msg)
 	toSend := append(jsonData, '\n')
-	_, err := peer.Conn.Write(toSend)
+	bytes, err := peer.Conn.Write(toSend)
 	if err != nil {
 		fmt.Println("ERROR:")
 		fmt.Println(err.Error())
+	} else {
+		fmt.Printf(Purple+"Unicasted %d bytes to %s"+Reset+"\n", bytes, peer.Id)
 	}
 }
