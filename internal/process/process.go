@@ -112,6 +112,7 @@ func (p *Process) Start() {
 
 	wg.Wait()
 	go p.handlePeerConnections()
+	fmt.Println(Cyan, "Waiting for establishing connection....", Reset)
 	time.Sleep(4 * time.Second)
 	clearStdin()
 	fmt.Println(Cyan, "READY!", Reset)
