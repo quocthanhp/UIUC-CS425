@@ -23,13 +23,13 @@ type Process struct {
 	send      chan *Msg
 	msgs      map[string]*PdMsg
 	bank      *Bank
-	hMsg      HashMsg
+	hMsg      map[[32]byte]bool
 }
 
-type HashMsg struct {
-	hashMsg map[[32]byte]bool
-	hLock   sync.Mutex
-}
+// type HashMsg struct {
+// 	hashMsg map[[32]byte]bool
+// 	hLock   sync.Mutex
+// }
 
 // var receivedMsg = make(map[string]struct{})
 
@@ -93,7 +93,7 @@ func (p *Process) Init() {
 	p.verified = make(chan *Msg, 200)
 	p.send = make(chan *Msg, 200)
 	p.msgs = make(map[string]*PdMsg)
-	p.hMsg.hashMsg = make(map[[32]byte]bool, 200)
+	p.hMsg = make(map[[32]byte]bool, 200)
 	p.bank = NewBank()
 }
 
@@ -174,18 +174,18 @@ func (p *Process) MonitorChannel() {
 			// Calculate hash to detect duplication
 			data, _ := json.Marshal(*msg)
 			hashVal := util.GetHash(data)
-			if _, ok := p.hMsg.hashMsg[hashVal]; ok {
-				fmt.Println("duplicated message!")
+			if _, ok := p.hMsg[hashVal]; ok {
+				//fmt.Println("duplicated message!")
 				continue
 			}
-			p.AppendHash(hashVal)
-			fmt.Printf("[HASH] of %s is %s\n", msg.Id, hashVal)
+			p.hMsg[hashVal] = true
+			//fmt.Printf("[HASH] of %s is %s\n", msg.Id, hashVal)
 
 			if msg.MT == Normal {
 				p.msgs[msg.Id] = &PdMsg{msg, 0}
 
 				if msg.From != p.self.Id {
-					fmt.Println("Reliably multicast NORMAL")
+					//fmt.Println("Reliably multicast NORMAL")
 					p.multicast(msg)
 				}
 			}
@@ -220,9 +220,9 @@ func (p *Process) MonitorChannel() {
 	}
 }
 
-func (p *Process) AppendHash(hash [32]byte) {
-	p.hMsg.hLock.Lock()
-	defer p.hMsg.hLock.Unlock()
+// func (p *Process) AppendHash(hash [32]byte) {
+// 	p.hMsg.hLock.Lock()
+// 	defer p.hMsg.hLock.Unlock()
 	
-	p.hMsg.hashMsg[hash] = true
-}
+// 	p.hMsg.hashMsg[hash] = true
+// }

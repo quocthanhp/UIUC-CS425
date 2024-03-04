@@ -38,7 +38,7 @@ func (p *Process) Ordering() {
 			}
 		} else if msg.MT == AgrPriority {
 			if (msg.From != p.self.Id) {
-				fmt.Println("Reliably multicast AGR_PRIORITY")
+				//fmt.Println("Reliably multicast AGR_PRIORITY")
 				p.multicast(msg)
 			}
 
