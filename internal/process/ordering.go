@@ -3,7 +3,6 @@ package process
 import (
 	"fmt"
 	"mp1_node/internal/util"
-	"encoding/json"
 	"sort"
 )
 
@@ -38,11 +37,6 @@ func (p *Process) Ordering() {
 				p.multicast(&Msg{From: p.self.Id, Id: msg.Id, MT: AgrPriority, Priority: p.msgs[msg.Id].msg.Priority})
 			}
 		} else if msg.MT == AgrPriority {
-			// For duplicate detection
-			data, _ := json.Marshal(*msg)
-			hashVal := util.GetHash(data)
-			p.AppendHash(hashVal)
-
 			if (msg.From != p.self.Id) {
 				fmt.Println("Reliably multicast AGR_PRIORITY")
 				p.multicast(msg)
