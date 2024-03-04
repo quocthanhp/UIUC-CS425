@@ -21,6 +21,7 @@ type Process struct {
 	send      chan *Msg
 	msgs      map[string]*PdMsg
 	bank      *Bank
+	que       MsgQ
 }
 
 // var receivedMsg = make(map[string]struct{})
@@ -86,6 +87,7 @@ func (p *Process) Init() {
 	p.send = make(chan *Msg, 200)
 	p.msgs = make(map[string]*PdMsg)
 	p.bank = NewBank()
+	p.que = MsgQ{}
 }
 
 func (p *Process) Start() {
@@ -192,4 +194,10 @@ func (p *Process) MonitorChannel() {
 			go p.multicast(msg)
 		}
 	}
+}
+
+func (p *Process) handleFailure(peer *Node) {
+	p.que.removeDeprecatedMsg(peer)
+	p.groupSize--
+	delete(p.peers, peer.Id)
 }

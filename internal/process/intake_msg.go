@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net"
 	"os"
 	"strings"
 )
@@ -32,17 +31,19 @@ func (p *Process) ReadInput() {
 func (p *Process) handlePeerConnections() {
 	for _, peer := range p.peers {
 		if peer != p.self {
-			go p.handleSingleConnection(peer.Conn)
+			go p.handleSingleConnection(peer)
 		}
 	}
 }
 
-func (p *Process) handleSingleConnection(conn net.Conn) {
+func (p *Process) handleSingleConnection(peer *Node) {
+	reader := bufio.NewReader(peer.Conn)
 	for {
-		buf, err := bufio.NewReader(conn).ReadBytes('\n')
+		buf, err := reader.ReadBytes('\n')
 		if err != nil {
 			if err == io.EOF {
 				fmt.Println("Client closed the connection")
+				p.handleFailure(peer)
 				break
 			}
 

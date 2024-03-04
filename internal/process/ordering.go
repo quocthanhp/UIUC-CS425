@@ -9,20 +9,23 @@ import (
 var maxPriority = 0
 
 func (p *Process) Ordering() {
-	que := MsgQ{}
 	for msg := range p.verified {
+		if _, ok := p.peers[msg.From]; !ok {
+			fmt.Println(Cyan, "Mesage from invalid source.", Reset)
+			continue
+		}
 		fmt.Printf(Green+"[PROCESSING %s] %s\n"+Reset, msg.From, msg.toString())
 		if msg.MT == Normal {
 			fmt.Println(Blue, "NORMAL MESSAGE", Reset)
-			N := len(que)
+			N := p.que.Len()
 			if N != 0 {
-				maxPriority = que[N-1].msg.Priority
+				maxPriority = p.que[N-1].msg.Priority
 			} else {
 				maxPriority = 0
 			}
 			p.unicast(&Msg{From: p.self.Id, Id: msg.Id, MT: PrpPriority, Priority: maxPriority + 1}, p.peers[msg.From])
-			que = append(que, p.msgs[msg.Id])
-			sort.Sort(que)
+			p.que = append(p.que, p.msgs[msg.Id])
+			sort.Sort(p.que)
 			msg.Tx.TS = Undeliverable
 		} else if msg.MT == PrpPriority {
 			fmt.Println(Blue, "PROPOSED PRIORITY", Reset)
@@ -32,7 +35,7 @@ func (p *Process) Ordering() {
 			}
 			p.msgs[msg.Id].msg.Priority = util.Max(p.msgs[msg.Id].msg.Priority, msg.Priority)
 			p.msgs[msg.Id].proposed++
-			que.Print()
+			p.que.Print()
 			if p.msgs[msg.Id].proposed == p.groupSize {
 				p.multicast(&Msg{From: p.self.Id, Id: msg.Id, MT: AgrPriority, Priority: p.msgs[msg.Id].msg.Priority})
 			}
@@ -40,12 +43,12 @@ func (p *Process) Ordering() {
 			fmt.Println(Blue, "AGREED PRIORITY", Reset)
 			p.msgs[msg.Id].msg.Priority = msg.Priority
 			p.msgs[msg.Id].msg.Tx.TS = Deliverable
-			sort.Sort(que)
+			sort.Sort(p.que)
 			// que.Print()
-			for que.Len() > 0 && que[0].msg.Tx.TS == Deliverable {
+			for p.que.Len() > 0 && p.que[0].msg.Tx.TS == Deliverable {
 				fmt.Println("DELIVERING MESSAGE")
-				toDeliver := que[0]
-				que = que[1:]
+				toDeliver := p.que[0]
+				p.que = p.que[1:]
 				p.deliver(toDeliver.msg)
 			}
 		} else {

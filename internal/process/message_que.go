@@ -27,3 +27,14 @@ func (q MsgQ) Print() {
 	}
 	fmt.Print(Reset)
 }
+
+func (q *MsgQ) removeDeprecatedMsg(peer *Node) {
+	idx := 0
+	for _, pdmsg := range *q {
+		if pdmsg.msg.From != peer.Id {
+			(*q)[idx] = pdmsg
+			idx++
+		}
+	}
+	*q = (*q)[:idx]
+}
