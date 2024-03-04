@@ -17,7 +17,7 @@ func (p *Process) multicast(msg *Msg) {
 func (p *Process) unicast(msg *Msg, peer *Node) {
 	fmt.Printf(Purple+"Unicasting to %s...."+Reset+"\n", peer.Id)
 	if peer.Id == p.self.Id {
-		p.recvd <- msg
+		p.recvd <- msg	
 		return
 	}
 

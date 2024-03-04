@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"bytes"
 	"io"
 	"net"
 	"os"
@@ -49,6 +50,9 @@ func (p *Process) handleSingleConnection(conn net.Conn) {
 			fmt.Println(err)
 			break
 		}
+
+		// Remove newline character from buf
+		buf = bytes.TrimRight(buf, "\n")
 
 		var msg Msg
 		err = json.Unmarshal(buf, &msg)

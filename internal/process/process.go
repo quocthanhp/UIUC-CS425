@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"mp1_node/internal/util"
+	"encoding/json"
 )
 
 type Process struct {
@@ -21,6 +23,7 @@ type Process struct {
 	send      chan *Msg
 	msgs      map[string]*PdMsg
 	bank      *Bank
+	hashMsg   map[[32]byte]bool
 }
 
 // var receivedMsg = make(map[string]struct{})
@@ -85,6 +88,7 @@ func (p *Process) Init() {
 	p.verified = make(chan *Msg, 200)
 	p.send = make(chan *Msg, 200)
 	p.msgs = make(map[string]*PdMsg)
+	p.hashMsg = make(map[[32]byte]bool, 200)
 	p.bank = NewBank()
 }
 
@@ -127,7 +131,7 @@ func clearStdin() {
 func (p *Process) Run() {
 	var wg sync.WaitGroup
 
-	wg.Add(2)
+	wg.Add(3)
 	//TODO: handle timeout proposal
 	clearStdin()
 
@@ -161,9 +165,26 @@ func (p *Process) MonitorChannel() {
 		select {
 		case msg := <-p.recvd:
 			fmt.Printf(Yellow+"[GOT MSG] %s\n"+Reset, msg.toString())
+
+			// Calculate hash to detect duplication
+			data, _ := json.Marshal(*msg)
+			hashVal := util.GetHash(data)
+			if _, ok := p.hashMsg[hashVal]; ok {
+				fmt.Println("duplicated message!")
+				continue
+			}
+			p.hashMsg[hashVal] = true
+			fmt.Printf("[HASH] of %s is %s\n", msg.Id, hashVal)
+
 			if msg.MT == Normal {
 				p.msgs[msg.Id] = &PdMsg{msg, 0}
+
+				if msg.From != p.self.Id {
+					fmt.Println("Reliably multicast NORMAL")
+					p.multicast(msg)
+				}
 			}
+
 			p.verified <- msg
 
 			// key := string(rawbytes)
