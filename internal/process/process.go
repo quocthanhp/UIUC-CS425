@@ -12,16 +12,17 @@ import (
 )
 
 type Process struct {
-	self      *Node
-	peers     map[string]*Node
-	groupSize int
-	ln        net.Listener
-	recvd     chan *Msg
-	verified  chan *Msg
-	send      chan *Msg
-	msgs      map[string]*PdMsg
-	bank      *Bank
-	que       MsgQ
+	self       *Node
+	peers      map[string]*Node
+	groupSize  int
+	ln         net.Listener
+	recvd      chan *Msg
+	verified   chan *Msg
+	send       chan *Msg
+	msgs       map[string]*PdMsg
+	bank       *Bank
+	que        MsgQ
+	log_writer *bufio.Writer
 }
 
 // var receivedMsg = make(map[string]struct{})
@@ -51,10 +52,6 @@ func (p *Process) ReadPeersInfo(self_id string, filePath string) {
 		if scanner.Scan() {
 			line := scanner.Text()
 			fmt.Println(line)
-			if err != nil {
-				fmt.Println("Err convert group size to int:", err)
-				os.Exit(1)
-			}
 			line = strings.TrimSpace(line)
 			parts := strings.Split(line, " ")
 			if len(parts) != 3 {
@@ -91,6 +88,14 @@ func (p *Process) Init() {
 }
 
 func (p *Process) Start() {
+	file, err := os.Create("timestamp_log/timestamplog-" + p.self.Id)
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		os.Exit(1)
+	} else {
+		fmt.Println(Cyan, "LOG FILE CREATED!", Reset)
+		p.log_writer = bufio.NewWriter(file)
+	}
 	var wg sync.WaitGroup
 
 	wg.Add(2)
@@ -107,7 +112,8 @@ func (p *Process) Start() {
 
 	wg.Wait()
 	go p.handlePeerConnections()
-	time.Sleep(2 * time.Second)
+	time.Sleep(4 * time.Second)
+	clearStdin()
 	fmt.Println(Cyan, "READY!", Reset)
 }
 
@@ -131,7 +137,7 @@ func (p *Process) Run() {
 
 	wg.Add(2)
 	//TODO: handle timeout proposal
-	clearStdin()
+	// clearStdin()
 
 	go func() {
 		defer wg.Done()
@@ -159,36 +165,22 @@ func (p *Process) Clean() {
 }
 
 func (p *Process) MonitorChannel() {
+	set := make(Set)
 	for {
 		select {
 		case msg := <-p.recvd:
-			fmt.Printf(Yellow+"[GOT MSG] %s\n"+Reset, msg.toString())
-			if msg.MT == Normal {
-				p.msgs[msg.Id] = &PdMsg{msg, 0}
+			if msg.MT == PrpPriority {
+				fmt.Printf(Yellow+"[GOT MSG] %s\n"+Reset, msg.toString())
+				p.verified <- msg
+			} else if !set.Contains(msg.toString()) {
+				fmt.Printf(Yellow+"[GOT MSG] %s\n"+Reset, msg.toString())
+				set.Add(msg.toString())
+				if msg.MT == Normal {
+					p.msgs[msg.Id] = &PdMsg{msg, 0}
+				}
+				p.verified <- msg
+				p.multicast(msg)
 			}
-			p.verified <- msg
-
-			// key := string(rawbytes)
-			// fmt.Printf(Yellow+"[GOT MSG] %s\n"+Reset, string(rawbytes))
-			// if msg.MT == PrpPriority {
-			// 	fmt.Println("First branch")
-			// 	p.verified <- msg
-			// } else if _, ok := receivedMsg[key]; !ok {
-			// 	fmt.Println("Second branch")
-			// 	receivedMsg[key] = struct{}{}
-			// 	fmt.Println("Second branch")
-			// 	if msg.MT == Normal {
-			// 		fmt.Println("Second branch")
-			// 		p.msgs[msg.Id] = &PdMsg{msg, 0}
-			// 	}
-			// 	fmt.Println("Second branch")
-			// 	// fmt.Printf(Green+"[FROM %s] %s\n"+Reset, msg.From, string(rawbytes))
-			// 	p.verified <- msg
-			// 	if msg.From != p.self.Id {
-			// 		fmt.Println("Second branch")
-			// 		go p.multicast(msg)
-			// 	}
-			// }
 		case msg := <-p.send:
 			msg.From = p.self.Id
 			go p.multicast(msg)
