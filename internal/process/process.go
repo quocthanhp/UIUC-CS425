@@ -2,7 +2,6 @@ package process
 
 import (
 	"bufio"
-	"fmt"
 	"net"
 	"os"
 	"strconv"
@@ -23,6 +22,7 @@ type Process struct {
 	bank       *Bank
 	que        MsgQ
 	log_writer *bufio.Writer
+	sync.Mutex
 }
 
 // var receivedMsg = make(map[string]struct{})
@@ -30,7 +30,7 @@ type Process struct {
 func (p *Process) ReadPeersInfo(self_id string, filePath string) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		fmt.Println("Error opening configuration file:", err)
+		// fmt.Fprintln(os.Stderr, "Error opening configuration file:", err)
 		return
 	}
 	defer file.Close()
@@ -39,10 +39,10 @@ func (p *Process) ReadPeersInfo(self_id string, filePath string) {
 
 	if scanner.Scan() {
 		line := scanner.Text()
-		fmt.Println(line)
+		// fmt.Fprintln(os.Stderr, line)
 		size, err := strconv.Atoi(strings.TrimSpace(line))
 		if err != nil {
-			fmt.Println("Err convert group size to int:", err)
+			// fmt.Fprintln(os.Stderr, "Err convert group size to int:", err)
 			os.Exit(1)
 		}
 		p.groupSize = size
@@ -51,11 +51,11 @@ func (p *Process) ReadPeersInfo(self_id string, filePath string) {
 	for i := 0; i < p.groupSize; i++ {
 		if scanner.Scan() {
 			line := scanner.Text()
-			fmt.Println(line)
+			// fmt.Fprintln(os.Stderr, line)
 			line = strings.TrimSpace(line)
 			parts := strings.Split(line, " ")
 			if len(parts) != 3 {
-				fmt.Println("Wrong formatting in config file:", line)
+				// fmt.Fprintln(os.Stderr, "Wrong formatting in config file:", line)
 				continue
 			}
 			peer := new(Node)
@@ -67,13 +67,13 @@ func (p *Process) ReadPeersInfo(self_id string, filePath string) {
 				p.self = peer
 			}
 		} else {
-			fmt.Println("Wrong formatting in config file.")
+			// fmt.Fprintln(os.Stderr, "Wrong formatting in config file.")
 			os.Exit(1)
 		}
 	}
 
 	if err := scanner.Err(); err != nil {
-		fmt.Println("Error reading configuration file:", err)
+		// fmt.Fprintln(os.Stderr, "Error reading configuration file:", err)
 	}
 }
 
@@ -90,10 +90,10 @@ func (p *Process) Init() {
 func (p *Process) Start() {
 	file, err := os.Create("timestamp_log/timestamplog-" + p.self.Id)
 	if err != nil {
-		fmt.Println("Error creating file:", err)
+		// fmt.Fprintln(os.Stderr, "Error creating file:", err)
 		os.Exit(1)
 	} else {
-		fmt.Println(Cyan, "LOG FILE CREATED!", Reset)
+		// fmt.Fprintln(os.Stderr, Cyan, "LOG FILE CREATED!", Reset)
 		p.log_writer = bufio.NewWriter(file)
 	}
 	var wg sync.WaitGroup
@@ -112,10 +112,10 @@ func (p *Process) Start() {
 
 	wg.Wait()
 	go p.handlePeerConnections()
-	fmt.Println(Cyan, "Waiting for establishing connection....", Reset)
+	// fmt.Fprintln(os.Stderr, Cyan, "Waiting for establishing connection....", Reset)
 	time.Sleep(4 * time.Second)
 	clearStdin()
-	fmt.Println(Cyan, "READY!", Reset)
+	// fmt.Fprintln(os.Stderr, Cyan, "READY!", Reset)
 }
 
 func clearStdin() {
@@ -171,10 +171,10 @@ func (p *Process) MonitorChannel() {
 		select {
 		case msg := <-p.recvd:
 			if msg.MT == PrpPriority {
-				fmt.Printf(Yellow+"[GOT MSG] %s\n"+Reset, msg.toString())
+				// fmt.Fprintf(os.Stderr, Yellow+"[GOT MSG] %s\n"+Reset, msg.toString())
 				p.verified <- msg
 			} else if !set.Contains(msg.toString()) {
-				fmt.Printf(Yellow+"[GOT MSG] %s\n"+Reset, msg.toString())
+				// fmt.Fprintf(os.Stderr, Yellow+"[GOT MSG] %s\n"+Reset, msg.toString())
 				set.Add(msg.toString())
 				if msg.MT == Normal {
 					p.msgs[msg.Id] = &PdMsg{msg, 0}
@@ -190,11 +190,15 @@ func (p *Process) MonitorChannel() {
 }
 
 func (p *Process) handleFailure(peer *Node) {
-	fmt.Println(Red, "[FAIL]FAILURE DETECTED!", Reset)
+	// fmt.Fprintln(os.Stderr, Red, "[FAIL]FAILURE DETECTED!", Reset)
+	p.Lock()
 	p.groupSize--
 	delete(p.peers, peer.Id)
+	p.Unlock()
 	time.Sleep(15 * time.Second)
-	fmt.Println(Red, "[FAIL]CLEARING OUT DEPRECATED MESSAGE....", Reset)
+	// fmt.Fprintln(os.Stderr, Red, "[FAIL]CLEARING OUT DEPRECATED MESSAGE....", Reset)
+	p.Lock()
 	p.que.removeDeprecatedMsg(peer)
-	fmt.Println(Red, "[FAIL]DEPRECATED MESSAGE CLEARED", Reset)
+	p.Unlock()
+	// fmt.Fprintln(os.Stderr, Red, "[FAIL]DEPRECATED MESSAGE CLEARED", Reset)
 }

@@ -3,7 +3,6 @@ package process
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -15,16 +14,16 @@ func (p *Process) ReadInput() {
 		line := strings.TrimSpace(scanner.Text())
 		msg, err := ToNetworkMsg(p.self.Id, line)
 		if err != nil {
-			fmt.Println(err)
+			// fmt.Fprintln(os.Stderr, err)
 			return
 		}
 
-		fmt.Println("MSG FROM STDIN:", line)
+		// fmt.Fprintln(os.Stderr, "MSG FROM STDIN:", line)
 		p.send <- msg
 	}
 
 	if err := scanner.Err(); err != nil {
-		fmt.Println("Error reading from stdin:", err)
+		// fmt.Fprintln(os.Stderr, "Error reading from stdin:", err)
 	}
 }
 
@@ -42,19 +41,19 @@ func (p *Process) handleSingleConnection(peer *Node) {
 		buf, err := reader.ReadBytes('\n')
 		if err != nil {
 			if err == io.EOF {
-				fmt.Println("Client closed the connection")
+				// fmt.Fprintln(os.Stderr, "Client closed the connection")
 				p.handleFailure(peer)
 				break
 			}
 
-			fmt.Println(err)
+			// fmt.Fprintln(os.Stderr, err)
 			break
 		}
 
 		var msg Msg
 		err = json.Unmarshal(buf, &msg)
 		if err != nil {
-			fmt.Println("Error reading:", err.Error())
+			// fmt.Fprintln(os.Stderr, "Error reading:", err.Error())
 			continue
 		}
 		p.recvd <- &msg

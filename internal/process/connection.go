@@ -3,7 +3,6 @@ package process
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"strings"
@@ -16,15 +15,15 @@ func (p *Process) matchConnToPeer(conn net.Conn) {
 	buf, err := reader.ReadString('\n')
 	buf = strings.TrimSpace(buf)
 	if err != nil {
-		fmt.Println("Error reading:", err.Error())
+		// fmt.Fprintln(os.Stderr, "Error reading:", err.Error())
 		return
 	}
 	if _, ok := p.peers[buf]; !ok {
-		fmt.Println("Cannot identify the connected peer!")
+		// fmt.Fprintln(os.Stderr, "Cannot identify the connected peer!")
 		os.Exit(1)
 	}
 	p.peers[buf].Conn = conn
-	fmt.Printf("[SELF] Established connection with peer <%s>\n", buf)
+	// fmt.Fprintf(os.Stderr, "[SELF] Established connection with peer <%s>\n", buf)
 }
 
 func (p *Process) createConnection(conn net.Conn) {
@@ -35,17 +34,17 @@ func (p *Process) startListen() {
 	var wg sync.WaitGroup
 	ln, err := net.Listen("tcp", ":"+p.self.Port)
 	if err != nil {
-		fmt.Println("Error listening:", err)
+		// fmt.Fprintln(os.Stderr, "Error listening:", err)
 		return
 	}
 	p.ln = ln
-	fmt.Printf("Listening on port %s....\n", p.self.Port)
+	// fmt.Fprintf(os.Stderr, "Listening on port %s....\n", p.self.Port)
 
 	// SHOULD IT BE groupsize - 1 ????
 	for i := 0; i < p.groupSize-1; i++ {
 		conn, err := ln.Accept()
 		if err != nil {
-			log.Printf("Error accepting connection: %s\n", err)
+			// log.Printf("Error accepting connection: %s\n", err)
 			continue
 		}
 
@@ -64,7 +63,7 @@ func (p *Process) connectToSinglePeer(node *Node, wg *sync.WaitGroup) {
 	for !connected {
 		conn, err := net.Dial("tcp", node.GetIPAddr())
 		if err != nil {
-			fmt.Printf("Cannot connect to peer %s, retrying after 1 second...\n", node.Id)
+			// fmt.Fprintf(os.Stderr, "Cannot connect to peer %s, retrying after 1 second...\n", node.Id)
 			time.Sleep(time.Second)
 			continue
 		}
@@ -84,5 +83,5 @@ func (p *Process) connectToPeers() {
 		}
 	}
 	wg.Wait()
-	fmt.Println("Connected to All Peers!")
+	// fmt.Fprintln(os.Stderr, "Connected to All Peers!")
 }

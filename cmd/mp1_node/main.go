@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"mp1_node/internal/process"
 	"os"
 )
 
 func main() {
 	if len(os.Args) != 3 {
-		fmt.Println("./mp1_node <identifier> <configuration file>")
+		// fmt.Fprintln(os.Stderr, "./mp1_node <identifier> <configuration file>")
 		os.Exit(1)
 	}
 

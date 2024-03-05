@@ -10,6 +10,11 @@ python3 -u gentx.py 1 | go run ./cmd/mp1_node node1 ./config/config_3local.txt
 python3 -u gentx.py 1 | go run ./cmd/mp1_node node2 ./config/config_3local.txt
 python3 -u gentx.py 1 | go run ./cmd/mp1_node node3 ./config/config_3local.txt
 
+python3 -u gentx.py 20 | go run ./cmd/mp1_node node1 ./config/config_4local.txt
+python3 -u gentx.py 20 | go run ./cmd/mp1_node node2 ./config/config_4local.txt
+python3 -u gentx.py 20 | go run ./cmd/mp1_node node3 ./config/config_4local.txt
+python3 -u gentx.py 20 | go run ./cmd/mp1_node node4 ./config/config_4local.txt
+
 python3 -u gentx.py 0.4 | go run ./cmd/mp1_node node1 ./config/config_2local.txt
 python3 -u gentx.py 0.4 | go run ./cmd/mp1_node node2 ./config/config_2local.txt
 
@@ -74,3 +79,7 @@ git commit -m "finished test"
 git push origin test-8node-normal-1 
 
 git checkout main
+
+
+git pull origin zeanh2-fix-race-condition
+git checkout zeanh2-fix-race-condition
