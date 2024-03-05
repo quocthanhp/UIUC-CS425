@@ -19,3 +19,7 @@ cat transac2.txt | go run ./cmd/mp1_node node2 ./config/config_2local.txt
 
 python3 -u gentx.py 0.1 | go run ./cmd/mp1_node node1 ./config/config_2vm.txt
 python3 -u gentx.py 0.1 | go run ./cmd/mp1_node node2 ./config/config_2vm.txt
+
+python3 -u gentx.py 0.5 | go run ./cmd/mp1_node vm1 ./config/config_3vm.txt
+python3 -u gentx.py 0.5 | go run ./cmd/mp1_node vm2 ./config/config_3vm.txt
+python3 -u gentx.py 0.5 | go run ./cmd/mp1_node vm3 ./config/config_3vm.txt
