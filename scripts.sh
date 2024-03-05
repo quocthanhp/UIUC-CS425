@@ -47,3 +47,30 @@ python3 -u gentx.py 5 | go run ./cmd/mp1_node vm5 ./config/config_8vm.txt
 python3 -u gentx.py 5 | go run ./cmd/mp1_node vm6 ./config/config_8vm.txt
 python3 -u gentx.py 5 | go run ./cmd/mp1_node vm7 ./config/config_8vm.txt
 python3 -u gentx.py 5 | go run ./cmd/mp1_node vm8 ./config/config_8vm.txt
+
+python3 -u gentx.py 1 | go run ./cmd/mp1_node vm1 ./config/config_8vm.txt
+python3 -u gentx.py 1 | go run ./cmd/mp1_node vm2 ./config/config_8vm.txt
+python3 -u gentx.py 1 | go run ./cmd/mp1_node vm3 ./config/config_8vm.txt
+python3 -u gentx.py 1 | go run ./cmd/mp1_node vm4 ./config/config_8vm.txt
+python3 -u gentx.py 1 | go run ./cmd/mp1_node vm5 ./config/config_8vm.txt
+python3 -u gentx.py 1 | go run ./cmd/mp1_node vm6 ./config/config_8vm.txt
+python3 -u gentx.py 1 | go run ./cmd/mp1_node vm7 ./config/config_8vm.txt
+python3 -u gentx.py 1 | go run ./cmd/mp1_node vm8 ./config/config_8vm.txt
+
+cd mp1
+git pull origin main
+go mod tidy
+
+git checkout -b test-8node-normal-1
+git checkout -b test-8node-normal-2
+git checkout -b test-8node-normal-3
+git checkout -b test-8node-normal-4
+git checkout -b test-8node-normal-5
+git checkout -b test-8node-normal-6
+git checkout -b test-8node-normal-7
+git checkout -b test-8node-normal-8
+git add .
+git commit -m "finished test"
+git push origin test-8node-normal-1 
+
+git checkout main
