@@ -190,7 +190,11 @@ func (p *Process) MonitorChannel() {
 }
 
 func (p *Process) handleFailure(peer *Node) {
-	p.que.removeDeprecatedMsg(peer)
+	fmt.Println(Red, "[FAIL]FAILURE DETECTED!", Reset)
 	p.groupSize--
 	delete(p.peers, peer.Id)
+	time.Sleep(15 * time.Second)
+	fmt.Println(Red, "[FAIL]CLEARING OUT DEPRECATED MESSAGE....", Reset)
+	p.que.removeDeprecatedMsg(peer)
+	fmt.Println(Red, "[FAIL]DEPRECATED MESSAGE CLEARED", Reset)
 }
