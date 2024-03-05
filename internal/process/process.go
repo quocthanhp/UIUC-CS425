@@ -180,7 +180,9 @@ func (p *Process) MonitorChannel() {
 					p.msgs[msg.Id] = &PdMsg{msg, 0}
 				}
 				p.verified <- msg
-				p.multicast(msg)
+				if (msg.From != p.self.Id) {
+					p.multicast(msg)
+				}
 			}
 		case msg := <-p.send:
 			msg.From = p.self.Id
