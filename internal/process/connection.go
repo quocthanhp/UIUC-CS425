@@ -2,7 +2,7 @@ package process
 
 import (
 	"bufio"
-	"log"
+	"fmt"
 	"net"
 	"os"
 	"strings"
@@ -44,7 +44,7 @@ func (p *Process) startListen() {
 	for i := 0; i < p.groupSize-1; i++ {
 		conn, err := ln.Accept()
 		if err != nil {
-			log.Printf("Error accepting connection: %s\n", err)
+			// log.Printf("Error accepting connection: %s\n", err)
 			continue
 		}
 
@@ -68,7 +68,7 @@ func (p *Process) connectToSinglePeer(node *Node, wg *sync.WaitGroup) {
 			continue
 		}
 		node.Conn = conn
-		// fmt.Fprintf(conn, "%s\n", p.self.Id)
+		fmt.Fprintf(conn, "%s\n", p.self.Id)
 		connected = true
 	}
 }
