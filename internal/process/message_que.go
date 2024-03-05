@@ -1,7 +1,5 @@
 package process
 
-import "fmt"
-
 // struct for a pending message in the queue
 type PdMsg struct {
 	msg      *Msg
@@ -20,12 +18,12 @@ func (q MsgQ) Less(i, j int) bool {
 func (q MsgQ) Swap(i, j int) { q[i], q[j] = q[j], q[i] }
 
 func (q MsgQ) Print() {
-	fmt.Print(Red)
-	fmt.Println("PRINTING QUEUE:")
-	for _, pdmsg := range q {
-		fmt.Printf("ID:%s\tFROM:%s\tPRP#:%d\tPRIORITY:%d\tTS:%d\n", pdmsg.msg.Id, pdmsg.msg.From, pdmsg.proposed, pdmsg.msg.Priority, pdmsg.msg.Tx.TS)
-	}
-	fmt.Print(Reset)
+	// fmt.Fprint(os.Stderr, Red)
+	// fmt.Fprintln(os.Stderr, "PRINTING QUEUE:")
+	// for _, pdmsg := range q {
+	// fmt.Fprintf(os.Stderr, "ID:%s\tFROM:%s\tPRP#:%d\tPRIORITY:%d\tTS:%d\n", pdmsg.msg.Id, pdmsg.msg.From, pdmsg.proposed, pdmsg.msg.Priority, pdmsg.msg.Tx.TS)
+	// }
+	// fmt.Fprint(os.Stderr, Reset)
 }
 
 func (q *MsgQ) removeDeprecatedMsg(peer *Node) {
