@@ -16,6 +16,7 @@ func (p *Process) DemoOrdering() {
 
 func (p *Process) Ordering() {
 	for msg := range p.verified {
+		p.Lock()
 		if _, ok := p.peers[msg.From]; !ok {
 			fmt.Println(Cyan, "Mesage from invalid source.", Reset)
 			continue
@@ -60,5 +61,6 @@ func (p *Process) Ordering() {
 		} else {
 			fmt.Println("Invalid Message Type")
 		}
+		p.Unlock()
 	}
 }

@@ -23,6 +23,7 @@ type Process struct {
 	bank       *Bank
 	que        MsgQ
 	log_writer *bufio.Writer
+	sync.Mutex
 }
 
 // var receivedMsg = make(map[string]struct{})
@@ -191,10 +192,14 @@ func (p *Process) MonitorChannel() {
 
 func (p *Process) handleFailure(peer *Node) {
 	fmt.Println(Red, "[FAIL]FAILURE DETECTED!", Reset)
+	p.Lock()
 	p.groupSize--
 	delete(p.peers, peer.Id)
+	p.Unlock()
 	time.Sleep(15 * time.Second)
 	fmt.Println(Red, "[FAIL]CLEARING OUT DEPRECATED MESSAGE....", Reset)
+	p.Lock()
 	p.que.removeDeprecatedMsg(peer)
+	p.Unlock()
 	fmt.Println(Red, "[FAIL]DEPRECATED MESSAGE CLEARED", Reset)
 }
