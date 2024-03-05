@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"fmt"
 )
 
 func (p *Process) matchConnToPeer(conn net.Conn) {
@@ -68,7 +69,7 @@ func (p *Process) connectToSinglePeer(node *Node, wg *sync.WaitGroup) {
 			continue
 		}
 		node.Conn = conn
-		// fmt.Fprintf(conn, "%s\n", p.self.Id)
+		fmt.Fprintf(conn, "%s\n", p.self.Id)
 		connected = true
 	}
 }

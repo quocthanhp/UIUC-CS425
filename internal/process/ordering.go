@@ -15,7 +15,6 @@ var maxPriority = 0
 
 func (p *Process) Ordering() {
 	for msg := range p.verified {
-		p.Lock()
 		if _, ok := p.peers[msg.From]; !ok {
 			// fmt.Fprintln(os.Stderr, Cyan, "Mesage from invalid source.", Reset)
 			continue
@@ -60,6 +59,5 @@ func (p *Process) Ordering() {
 		} else {
 			// fmt.Fprintln(os.Stderr, "Invalid Message Type")
 		}
-		p.Unlock()
 	}
 }
