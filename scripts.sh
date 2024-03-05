@@ -23,3 +23,27 @@ python3 -u gentx.py 0.1 | go run ./cmd/mp1_node node2 ./config/config_2vm.txt
 python3 -u gentx.py 0.5 | go run ./cmd/mp1_node vm1 ./config/config_3vm.txt
 python3 -u gentx.py 0.5 | go run ./cmd/mp1_node vm2 ./config/config_3vm.txt
 python3 -u gentx.py 0.5 | go run ./cmd/mp1_node vm3 ./config/config_3vm.txt
+
+
+ssh zeanh2@sp24-cs425-6204.cs.illinois.edu
+ssh zeanh2@sp24-cs425-6205.cs.illinois.edu
+ssh zeanh2@sp24-cs425-6206.cs.illinois.edu
+ssh zeanh2@sp24-cs425-6207.cs.illinois.edu
+ssh zeanh2@sp24-cs425-6208.cs.illinois.edu
+
+ssh-keygen -t rsa -b 4096 -C "425node4"
+ssh-keygen -t rsa -b 4096 -C "425node5"
+ssh-keygen -t rsa -b 4096 -C "425node6"
+ssh-keygen -t rsa -b 4096 -C "425node7"
+ssh-keygen -t rsa -b 4096 -C "425node8"
+
+git clone git@gitlab.engr.illinois.edu:cs425-sp24-tw/mp1.git
+
+python3 -u gentx.py 5 | go run ./cmd/mp1_node vm1 ./config/config_8vm.txt
+python3 -u gentx.py 5 | go run ./cmd/mp1_node vm2 ./config/config_8vm.txt
+python3 -u gentx.py 5 | go run ./cmd/mp1_node vm3 ./config/config_8vm.txt
+python3 -u gentx.py 5 | go run ./cmd/mp1_node vm4 ./config/config_8vm.txt
+python3 -u gentx.py 5 | go run ./cmd/mp1_node vm5 ./config/config_8vm.txt
+python3 -u gentx.py 5 | go run ./cmd/mp1_node vm6 ./config/config_8vm.txt
+python3 -u gentx.py 5 | go run ./cmd/mp1_node vm7 ./config/config_8vm.txt
+python3 -u gentx.py 5 | go run ./cmd/mp1_node vm8 ./config/config_8vm.txt

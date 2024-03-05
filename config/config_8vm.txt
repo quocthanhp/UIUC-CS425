@@ -1,0 +1,9 @@
+8
+vm1 sp24-cs425-6201.cs.illinois.edu 1234
+vm2 sp24-cs425-6202.cs.illinois.edu 1234
+vm3 sp24-cs425-6203.cs.illinois.edu 1234
+vm4 sp24-cs425-6204.cs.illinois.edu 1234
+vm5 sp24-cs425-6205.cs.illinois.edu 1234
+vm6 sp24-cs425-6206.cs.illinois.edu 1234
+vm7 sp24-cs425-6207.cs.illinois.edu 1234
+vm8 sp24-cs425-6208.cs.illinois.edu 1234
