@@ -1,1 +1,9 @@
 provision/
+.DS_Store
+clonerepo.sh
+config/config_local1.txt
+copysshkey.sh
+internal/.DS_Store
+timestamp_log/timestamplog-vm1
+timestamp_log/timestamplog-vm2
+timestamp_log/timestamplog-vm3
