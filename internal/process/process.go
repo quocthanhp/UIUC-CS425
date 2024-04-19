@@ -113,7 +113,7 @@ func (p *Process) Start() {
 	go p.handlePeerConnections()
 	// fmt.Fprintln(os.Stderr, Cyan, "Waiting for establishing connection....", Reset)
 	time.Sleep(4 * time.Second)
-	clearStdin()
+	// clearStdin()
 	// fmt.Fprintln(os.Stderr, Cyan, "READY!", Reset)
 }
 
