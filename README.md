@@ -1,17 +1,3 @@
 # MP1 Event Ordering
-
-## Todos
-
-R Multicast \
-Failure Detection \
-Graph
-
-## If a receiver fails:
-
-reduce group size by 1 \
-remove receiver from peers
-
-## IF a sender fails:
-
-remove all the message in the que from the sender \
-remove sender from peer
+* Build a distributed system of multiple processes (or nodes) that maintain accounts and transactions. 
+* Ensure  global ordering of events across processes in order to perform consistent actions across all processes.
